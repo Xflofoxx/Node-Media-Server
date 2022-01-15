@@ -10,6 +10,7 @@ const NodeRelaySession = require('./node_relay_session');
 const context = require('./node_core_ctx');
 const { getFFmpegVersion, getFFmpegUrl } = require('./node_core_utils');
 const fs = require('fs');
+const querystring = require('querystring');
 const _ = require('lodash');
 
 class NodeRelayServer {
@@ -69,7 +70,7 @@ class NodeRelayServer {
         });
         this.staticSessions.set(i, session);
         session.run();
-        Logger.log('[Relay static pull] start', i, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[relay static pull] start', i, conf.inPath, 'to', conf.ouPath);
       }
     }
   }
@@ -77,36 +78,40 @@ class NodeRelayServer {
   //从远端拉推到本地
   onRelayPull(url, app, name) {
     let conf = {};
+    conf.app = app;
+    conf.name = name;
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = url;
     conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
-    let id = NodeCoreUtils.generateNewSessionID();
     let session = new NodeRelaySession(conf);
-    session.id = id;
+    const id = session.id;
+    context.sessions.set(id, session);
     session.on('end', (id) => {
       this.dynamicSessions.delete(id);
     });
     this.dynamicSessions.set(id, session);
     session.run();
-    Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
+    Logger.log('[relay dynamic pull] start id=' + id, conf.inPath, 'to', conf.ouPath);
     return id;
   }
 
   //从本地拉推到远端
   onRelayPush(url, app, name) {
     let conf = {};
+    conf.app = app;
+    conf.name = name;
     conf.ffmpeg = this.config.relay.ffmpeg;
     conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}/${app}/${name}`;
     conf.ouPath = url;
-    let id = NodeCoreUtils.generateNewSessionID();
     let session = new NodeRelaySession(conf);
-    session.id = id;
+    const id = session.id;
+    context.sessions.set(id, session);
     session.on('end', (id) => {
       this.dynamicSessions.delete(id);
     });
     this.dynamicSessions.set(id, session);
     session.run();
-    Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+    Logger.log('[relay dynamic push] start id=' + id, conf.inPath, 'to', conf.ouPath);
   }
 
   onPrePlay(id, streamPath, args) {
@@ -124,6 +129,10 @@ class NodeRelayServer {
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`;
         conf.ouPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
+        if(Object.keys(args).length > 0) {
+          conf.inPath += '?';
+          conf.inPath += querystring.encode(args);
+        }
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
@@ -131,7 +140,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        Logger.log('[Relay dynamic pull] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[relay dynamic pull] start id=' + id, conf.inPath, 'to', conf.ouPath);
       }
     }
   }
@@ -159,6 +168,10 @@ class NodeRelayServer {
         conf.ffmpeg = this.config.relay.ffmpeg;
         conf.inPath = `rtmp://127.0.0.1:${this.config.rtmp.port}${streamPath}`;
         conf.ouPath = conf.appendName === false ? conf.edge : (hasApp ? `${conf.edge}/${stream}` : `${conf.edge}${streamPath}`);
+        if(Object.keys(args).length > 0) {
+          conf.ouPath += '?';
+          conf.ouPath += querystring.encode(args);
+        }
         let session = new NodeRelaySession(conf);
         session.id = id;
         session.on('end', (id) => {
@@ -166,7 +179,7 @@ class NodeRelayServer {
         });
         this.dynamicSessions.set(id, session);
         session.run();
-        Logger.log('[Relay dynamic push] start', id, conf.inPath, ' to ', conf.ouPath);
+        Logger.log('[relay dynamic push] start id=' + id, conf.inPath, 'to', conf.ouPath);
       }
     }
 

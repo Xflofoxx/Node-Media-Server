@@ -5,7 +5,7 @@
 //
 
 const OS = require('os');
-const Package = require("../../package.json");
+const Package = require('../../../package.json');
 function cpuAverage() {
 
   //Initialise sum of idle and time of cores and fetch CPU info
@@ -57,6 +57,7 @@ function getSessionsInfo(sessions) {
   };
 
   for (let session of sessions.values()) {
+    if (session.TAG === 'relay') continue;
     let socket = session.TAG === 'rtmp' ? session.socket : session.req.socket;
     info.inbytes += socket.bytesRead;
     info.outbytes += socket.bytesWritten;
