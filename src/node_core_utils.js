@@ -4,9 +4,7 @@
 //  Copyright (c) 2018 Nodemedia. All rights reserved.
 //
 const Crypto = require('crypto');
-const EventEmitter = require('events');
 const { spawn } = require('child_process');
-const readline = require('readline');
 const context = require('./node_core_ctx');
 
 function generateNewSessionID() {
@@ -17,7 +15,7 @@ function generateNewSessionID() {
     for (let i = 0; i < 8; i++) {
       sessionID += possible.charAt((Math.random() * numPossible) | 0);
     }
-  } while (context.sessions.has(sessionID))
+  } while (context.sessions.has(sessionID));
   return sessionID;
 }
 
@@ -77,7 +75,7 @@ function getFFmpegUrl() {
       url = 'https://ffmpeg.zeranoe.com/builds/win64/static/ffmpeg-latest-win64-static.zip | https://ffmpeg.zeranoe.com/builds/win32/static/ffmpeg-latest-win32-static.zip';
       break;
     case 'linux':
-      url = 'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-64bit-static.tar.xz | https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-32bit-static.tar.xz';
+      url = 'https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz | https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-i686-static.tar.xz';
       break;
     default:
       url = 'http://ffmpeg.org/download.html';
@@ -92,4 +90,4 @@ module.exports = {
   genRandomName,
   getFFmpegVersion,
   getFFmpegUrl
-}
+};
